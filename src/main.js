@@ -1,44 +1,66 @@
-// src/main.js - COMBINED (Best of both)
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import App from './App.vue'
-import router from './router'
-import 'animate.css'
-import './styles/main.css'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+import router from './router';
 
-// Import Lucide icons
-import { 
-  Briefcase, Home, User, Settings, Bell, Wallet, 
-  Calendar, MapPin, Filter, Search, Star, ChevronRight, 
-  CheckCircle, ChevronDown, Menu, X, LogOut, Plus,
-  Sun, Moon, Globe, Shield, AlertCircle, Info, ChevronLeft,
-  XCircle
-} from 'lucide-vue-next'
+// Import Toast notifications
+import Toast from 'vue-toastification';
+import 'vue-toastification/dist/index.css';
 
-const app = createApp(App)
+// Import Vuelidate
+import { createVuelidate } from '@vuelidate/core';
 
-// Register Lucide icons globally
-const icons = { 
-  Briefcase, Home, User, Settings, Bell, Wallet, 
-  Calendar, MapPin, Filter, Search, Star, ChevronRight, 
-  CheckCircle, ChevronDown, Menu, X, LogOut, Plus,
-  Sun, Moon, Globe, Shield, AlertCircle, Info, ChevronLeft,
-  XCircle
-}
-for (const [key, component] of Object.entries(icons)) {
-  app.component(key, component)
-}
+// Create Vue app
+const app = createApp(App);
 
-app.use(createPinia())
-app.use(router)
+// Create Pinia store
+const pinia = createPinia();
 
-// Add page transition animations (from your old code)
-router.beforeEach((to, from, next) => {
-  document.body.classList.add('page-transition')
-  setTimeout(() => {
-    document.body.classList.remove('page-transition')
-    next()
-  }, 300)
-})
+// Toast configuration
+const toastOptions = {
+  position: 'top-right',
+  timeout: 5000,
+  closeOnClick: true,
+  pauseOnFocusLoss: true,
+  pauseOnHover: true,
+  draggable: true,
+  draggablePercent: 0.6,
+  showCloseButtonOnHover: false,
+  hideProgressBar: false,
+  closeButton: 'button',
+  icon: true,
+  rtl: false,
+  transition: 'Vue-Toastification__bounce',
+  maxToasts: 5,
+  newestOnTop: true,
+  filterBeforeCreate: (toast, toasts) => {
+    // Prevent duplicate toasts
+    if (toasts.filter(t => t.type === toast.type && t.content === toast.content).length >= 1) {
+      return false;
+    }
+    return toast;
+  }
+};
 
-app.mount('#app')
+// Use plugins
+app.use(pinia);
+app.use(router);
+app.use(Toast, toastOptions);
+app.use(createVuelidate());
+
+// Mount the app
+app.mount('#app');
+
+// Initialize auth store after app is mounted
+import { useAuthStore } from '@/stores/auth';
+
+// Small delay to ensure DOM is ready
+setTimeout(() => {
+  const authStore = useAuthStore();
+  authStore.initialize().catch(error => {
+    console.error('Failed to initialize auth:', error);
+  });
+}, 100);
+
+// Export for potential testing
+export { app };
